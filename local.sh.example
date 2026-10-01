@@ -1,0 +1,12 @@
+# 自分だけの設定。~/.config/shell/local.sh に置くと bash と zsh の両方で読み込まれる。
+# このファイルはリポジトリの外にあるので、ssh 先やメールアドレスを含むパスを書いてよい。
+
+# ディレクトリの短縮名（"名前=パス"）
+#   zsh:  ~proj で参照できる（cd ~proj、ls ~proj/foo）
+#   bash: 変数になる（cd proj、ls $proj/foo）
+NAMED_DIRS=(
+  "dl=$HOME/Downloads"
+  # "proj=$HOME/projects"
+)
+
+# alias myserver='ssh user@example.com -p 22'
