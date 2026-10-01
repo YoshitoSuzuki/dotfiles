@@ -1,0 +1,18 @@
+# xterm-256color に、macOS 標準の terminfo が持っていない属性を足したもの。
+#
+# herdr のペインの中は TERM=xterm-256color で、この terminfo には smxx（取り消し線）が
+# 無い。Neovim は terminfo に無い属性を一切送らないので、markdown の ~~取り消し線~~ が
+# 見た目に反映されない。undercurl（波線）と下線色も同じ理由で出ない。
+#
+# herdr と Ghostty はどちらも SGR 9 / 4:3 / 58 を扱えることを実測で確認済みなので、
+# その3つだけを足している。素の xterm-256color からの差分はこれだけ。
+#
+# 反映:  tic -x -o ~/.terminfo ~/.config/terminfo/herdr.terminfo
+# 確認:  infocmp -1x xterm-256color-herdr | grep -E 'smxx|Smulx|Setulc'
+
+xterm-256color-herdr|xterm-256color with strikethrough and undercurl,
+	smxx=\E[9m,
+	rmxx=\E[29m,
+	Smulx=\E[4\:%p1%dm,
+	Setulc=\E[58\:2\:\:%p1%{65536}%/%d\:%p1%{256}%/%{255}%&%d\:%p1%{255}%&%d%;m,
+	use=xterm-256color,

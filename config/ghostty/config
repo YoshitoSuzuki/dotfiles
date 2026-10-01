@@ -1,0 +1,101 @@
+# Ghostty configuration
+#
+# タブ・ペイン・テーマ・エージェント状態の管理は herdr に任せ、
+# Ghostty は「herdr を映す窓」として使う。
+# 同じ役割の WezTerm 設定は ~/.config/wezterm/wezterm.lua（そのまま使える状態で残してある）。
+#
+# 設定の反映は Cmd+Shift+, （WezTerm と違い自動再読み込みはされない）
+# 設定項目の一覧は `ghostty +show-config --default --docs`
+
+# 1. フォント
+font-family = JetBrainsMono Nerd Font Mono
+font-size = 14
+
+# 2. カラーテーマ（WezTerm の "Tokyo Night" と同じ #1a1b26 系）
+theme = TokyoNight
+
+# 3. 画面の透過とすりガラス効果
+background-opacity = 0.75
+background-blur = 20
+
+# 4. タイトルバーを消す（WezTerm の window_decorations = "RESIZE" 相当）
+#    none にすると枠と角丸まで消えるので hidden を使う
+macos-titlebar-style = hidden
+
+# 5. 少しだけ余白を作る
+window-padding-x = 8
+window-padding-y = 8
+
+# 6. 起動時に herdr にアタッチする（サーバーは herdr 自身が自動起動する）
+# 注意: herdr のペインの中から `open -a Ghostty` すると HERDR_* 環境変数が引き継がれ、
+# herdr が入れ子起動とみなして "nested herdr is disabled by default" で落ちる。
+# Dock / Spotlight / Finder から起動する分には問題ない。
+command = /opt/homebrew/bin/herdr
+
+# コピーのたびに画面内トーストを出さない（設定リロードの通知だけ残す）
+app-notifications = config-reload
+
+
+# ---- Cmd キーの転送 ----
+# Cmd キーはターミナルの中のプログラムには届かないので、Ghostty 側で受けて
+# herdr のキー操作に翻訳する。herdr の prefix = ctrl+space は NUL バイト(\x00)。
+# WezTerm 側の to_herdr() ヘルパと同じ対応。
+
+# タブ操作
+keybind = super+t=text:\x00c
+keybind = super+w=text:\x00X
+keybind = super+shift+[=text:\x00p
+keybind = super+shift+]=text:\x00n
+
+# Cmd+1〜9 で herdr のタブを切り替える
+keybind = super+1=text:\x001
+keybind = super+2=text:\x002
+keybind = super+3=text:\x003
+keybind = super+4=text:\x004
+keybind = super+5=text:\x005
+keybind = super+6=text:\x006
+keybind = super+7=text:\x007
+keybind = super+8=text:\x008
+keybind = super+9=text:\x009
+
+# 新しいウィンドウは同じ herdr セッションが二重に映るだけなので無効化
+keybind = super+n=ignore
+
+# Ghostty 自身のタブ・分割も同じ理由で塞ぐ（分割は下の Ctrl+a 側に寄せる）
+keybind = super+d=ignore
+keybind = super+shift+d=ignore
+keybind = ctrl+tab=ignore
+keybind = ctrl+shift+tab=ignore
+
+
+# ---- Ctrl+a（退避用）----
+# herdr が使えないときに Ghostty 単体で戦うためのキー。WezTerm の Leader と同じ配置。
+# WezTerm の Leader と違いタイムアウトが無く、次のキーを押すまで待ち続ける。
+
+# 画面分割（\ で左右、- で上下）
+keybind = ctrl+a>\=new_split:right
+keybind = ctrl+a>-=new_split:down
+
+# ペインの移動（hjkl）
+keybind = ctrl+a>h=goto_split:left
+keybind = ctrl+a>l=goto_split:right
+keybind = ctrl+a>k=goto_split:up
+keybind = ctrl+a>j=goto_split:down
+
+# ペインを閉じる
+keybind = ctrl+a>x=close_surface
+
+# サイズ調整（Shift を足す）
+keybind = ctrl+a>shift+h=resize_split:left,5
+keybind = ctrl+a>shift+l=resize_split:right,5
+keybind = ctrl+a>shift+k=resize_split:up,5
+keybind = ctrl+a>shift+j=resize_split:down,5
+
+# 管理系（WezTerm の Leader+w のランチャー、Leader+[ のコピーモードに相当するもの）
+keybind = ctrl+a>w=toggle_command_palette
+keybind = ctrl+a>[=start_search
+
+# herdr を経由しない素のシェルを別ウィンドウで開く（herdr の停止・更新・復旧用）
+# Ghostty はキーバインドから別コマンドを起動できないので、コマンドを打ち込む形にしている
+# （herdr 自体が固まって入力を受け付けないときは WezTerm を使う）
+keybind = ctrl+a>n=text:open -na Ghostty.app --args --command="/bin/zsh -l"\r

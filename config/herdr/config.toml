@@ -1,0 +1,56 @@
+onboarding = false
+# herdr configuration
+# 全設定項目は `herdr --default-config` で確認できる。
+# 変更の反映は `herdr server reload-config`。壊したときは `herdr config reset-keys`。
+
+[keys]
+# WezTerm の Leader と同じ指の動きにする。
+# これに伴い WezTerm 側の Leader は Ctrl+a に退避させている。
+prefix = "ctrl+space"
+
+# 左右分割を WezTerm と同じ \ に。上下分割の prefix+minus は既定のまま。
+# バックスラッシュを書くためリテラル文字列（シングルクォート）にしている。
+split_vertical = 'prefix+\'
+
+# ワークスペースの選択（prefix+w の navigate モード）を j/k でもできるようにする。
+# 既定は 上下矢印=ワークスペース / j,k=ペイン なので、両者を入れ替える。
+navigate_workspace_up = "k"
+navigate_workspace_down = "j"
+navigate_pane_up = "up"
+navigate_pane_down = "down"
+
+[ui]
+# 分割したペインの枠に、どれがどのエージェントで今どの状態かを出す。
+show_agent_labels_on_pane_borders = true
+
+# サイドバーのエージェント一覧を、手が空いた順（attention queue）に並べる。
+agent_panel_sort = "priority"
+
+[ui.sidebar.agents]
+# 1行目: 状態アイコン + 会話のタイトル、2行目: idle/working + エージェント名。
+rows = [["state_icon", "terminal_title_stripped"], ["state_text", "agent"]]
+
+[ui.sidebar.agents.rows_by_agent]
+claude = [["state_icon", "terminal_title_stripped"], ["state_text", "agent"]]
+
+[ui.toast]
+# バナー通知は出さない（音だけで気づく運用）。"system" で macOS 通知、"herdr" で画面内トースト。
+delivery = "off"
+
+[ui.sound]
+# 状態変化の音は鳴らす。
+enabled = true
+
+[theme]
+# WezTerm の color_scheme = "Tokyo Night" と揃える。
+name = "tokyo-night"
+
+[theme.custom]
+# WezTerm の透過とすりガラス（window_background_opacity / macos_window_background_blur）を
+# 潰さないよう、herdr 側で背景を塗らせない。見づらければこの行を消す。
+panel_bg = "reset"
+
+[experimental]
+# nvim / snacks.image がターミナル内に画像を直接描けるようにする。
+# Ghostty は kitty graphics 対応なので通る。表示が崩れたらこの行を消す。
+kitty_graphics = true

@@ -10,3 +10,6 @@ NAMED_DIRS=(
 )
 
 # alias myserver='ssh user@example.com -p 22'
+
+# Neovim の tex スニペット（main）で \author{} に入る名前
+# export TEX_AUTHOR='名前'
