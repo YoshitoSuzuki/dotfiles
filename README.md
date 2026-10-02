@@ -15,18 +15,40 @@
 ```sh
 xcode-select --install     # git が無ければ。ダイアログでインストールを押す
 git clone https://github.com/YoshitoSuzuki/dotfiles.git ~/dotfiles
-~/dotfiles/install.sh
+~/dotfiles/install.sh      # Homebrew を使わないなら  ~/dotfiles/install.sh --no-brew
 ```
+
+`xcode-select --install` で入るのは Xcode 本体ではなく、git やコンパイラなどのコマンド一式
+（Command Line Tools）。Neovim がプラグインの取得と構文解析器のビルドに使うので必要。
 
 `install.sh` がやること（何度実行しても同じ結果になる）:
 
-1. Homebrew が無ければ入れる（パスワードを聞かれる）。`Brewfile` のアプリを入れる
+1. Homebrew が無ければ入れる（パスワードを聞かれる）。`Brewfile` のアプリを入れる。
+   `--no-brew` のときは Homebrew を使わずに入れる（下の「Homebrew を使わない場合」）
 2. 設定ファイルをシンボリックリンクで置く。既にあるファイルは `<名前>.backup.<日時>` に退避する
 3. herdr の中の Neovim で取り消し線と波線を出すための terminfo を登録する
 4. 自分用の設定ファイル `~/.config/shell/local.sh` を雛形から作る
 
 一部だけ入れたいときは名前を並べる: `install.sh nvim ghostty`
-（`brew` `zsh` `bash` `ghostty` `herdr` `nvim` `wezterm` `terminfo`）
+（`brew` `tools` `zsh` `bash` `ghostty` `herdr` `nvim` `wezterm` `terminfo`）
+
+### Homebrew を使わない場合
+
+会社の Mac などで Homebrew を入れられないときは `install.sh --no-brew` を使う。
+各アプリを公式の配布物から直接ダウンロードして、自分のホームの下に入れる。**管理者権限は要らない**。
+
+| もの | 入手元 | 入る場所 |
+| --- | --- | --- |
+| Ghostty / WezTerm | ghostty.org / GitHub Releases | `~/Applications` |
+| herdr | herdr.dev の公式インストーラ | `~/.local/bin` |
+| Neovim / ripgrep / fd / lazygit | GitHub Releases | `~/.local/opt/<名前>`（コマンドは `~/.local/bin` にリンク） |
+| Node.js（LTS の最新版） | nodejs.org | 同上 |
+| JetBrains Mono Nerd Font | Nerd Fonts の GitHub Releases | `~/Library/Fonts` |
+
+- すでに入っているもの（Homebrew 版を含む）は飛ばす
+- `rm` をゴミ箱送りにする `rmtrash` は入らない（`rm` は通常の削除のまま）
+- 自動では更新されない。新しい版にするときは `~/.local/opt/<名前>` を消してから `install.sh tools`
+- **会社の Mac では、Homebrew を使うかどうかに関係なく、ソフトを入れてよいかを先に社内のルールで確認する**
 
 ## 入れたあとにやること
 
