@@ -13,3 +13,7 @@ NAMED_DIRS=(
 
 # Neovim の tex スニペット（main）で \author{} に入る名前
 # export TEX_AUTHOR='名前'
+# LaTeX の ytex（tx コマンド）の \reportinfo に入る情報
+# export TEX_NAME='名前'
+# export TEX_STUDENT_ID='学籍番号'
+# export TEX_AFFILIATION='学部学科'
