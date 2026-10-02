@@ -67,7 +67,15 @@ wezterm.on("update-right-status", function(window, _)
 end)
 
 -- 起動時に herdr にアタッチする（サーバーは herdr 自身が自動起動する）
-config.default_prog = { "/opt/homebrew/bin/herdr" }
+-- Homebrew 版と公式インストーラ版（~/.local/bin）のうち、あるほうを使う
+for _, path in ipairs({ "/opt/homebrew/bin/herdr", wezterm.home_dir .. "/.local/bin/herdr" }) do
+	local f = io.open(path)
+	if f then
+		f:close()
+		config.default_prog = { path }
+		break
+	end
+end
 
 -- Leader Key
 -- Ctrl+Space は herdr の prefix に譲ったので、こちらは Ctrl+a

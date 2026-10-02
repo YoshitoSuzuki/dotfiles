@@ -27,10 +27,12 @@ window-padding-x = 8
 window-padding-y = 8
 
 # 6. 起動時に herdr にアタッチする（サーバーは herdr 自身が自動起動する）
+# herdr は Homebrew 版（/opt/homebrew/bin）でも公式インストーラ版（~/.local/bin）でも動くよう、
+# 両方を PATH に足してから起動する。Dock から開いた Ghostty の PATH にはどちらも入っていない。
 # 注意: herdr のペインの中から `open -a Ghostty` すると HERDR_* 環境変数が引き継がれ、
 # herdr が入れ子起動とみなして "nested herdr is disabled by default" で落ちる。
 # Dock / Spotlight / Finder から起動する分には問題ない。
-command = /opt/homebrew/bin/herdr
+command = shell:PATH="/opt/homebrew/bin:$HOME/.local/bin:$PATH" exec herdr
 
 # コピーのたびに画面内トーストを出さない（設定リロードの通知だけ残す）
 app-notifications = config-reload
