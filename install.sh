@@ -1,7 +1,7 @@
 #!/bin/sh
 # このリポジトリの設定を、このマシン（macOS / Linux）にそのまま入れる。
 #
-#   ./install.sh                全部（下の順に実行）。Linux では brew の代わりに tools になる
+#   ./install.sh                全部（下の順に実行）。Linux では bash だけ
 #   ./install.sh --no-brew      全部。ただしアプリは Homebrew を使わずに入れる（brew の代わりに tools）
 #   ./install.sh nvim ghostty   一部だけ
 #
@@ -169,7 +169,11 @@ link() {  # link <リポジトリ内のパス> <置き場所>
 }
 
 ALL="brew zsh bash ghostty herdr nvim wezterm terminfo"
-if [ "${1:-}" = --no-brew ] || { [ $# = 0 ] && [ $OS = linux ]; }; then
+# Linux（ssh で入るサーバー）ではシェルの設定だけを入れる。
+# Neovim などの見た目はターミナルや screen の色の扱いに左右されるので、macOS だけで使う
+if [ $# = 0 ] && [ $OS = linux ]; then
+  targets=bash
+elif [ "${1:-}" = --no-brew ]; then
   targets=$(echo "$ALL" | sed 's/^brew/tools/')
 else
   targets=${*:-$ALL}

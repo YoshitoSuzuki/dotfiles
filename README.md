@@ -9,7 +9,7 @@
 - 見た目は全部 Tokyo Night + JetBrains Mono Nerd Font で統一
 
 対象は **macOS** と **Linux**（どちらも Apple Silicon / ARM と x86_64）。
-Linux ではサーバー（ssh で入るだけの環境）でも使えるように、シェル・Neovim・herdr だけを入れる。
+Linux（ssh で入るだけのサーバー）では **bash の設定だけ**を入れる。
 
 ## 入れ方
 
@@ -54,26 +54,23 @@ git clone https://github.com/YoshitoSuzuki/dotfiles.git ~/dotfiles
 ### Linux
 
 ```sh
-sudo apt install git curl unzip zsh    # Debian / Ubuntu の場合。Fedora なら dnf
+sudo apt install git    # Debian / Ubuntu の場合。Fedora なら dnf
 git clone https://github.com/YoshitoSuzuki/dotfiles.git ~/dotfiles
 ~/dotfiles/install.sh
 ```
 
-Linux では `install.sh` は Homebrew を使わず、上の表と同じ公式の配布物を `~/.local` の下に入れる
-（`--no-brew` を付けたときと同じ。`sudo` は要らない）。macOS との違い:
+Linux では `install.sh` は `~/.bashrc` / `~/.bash_profile` のリンクと `~/.config/shell/local.sh` の
+雛形だけを置く。アプリ（Neovim・herdr など）やほかの設定は入れない。
+サーバーでは GNU screen など色の扱いが違う環境で開くことが多く、Neovim の配色が崩れるため
+（screen 4.x はフルカラーを扱えない）。エイリアス・PATH・関数は macOS と同じものが使える。
 
-- **Ghostty / WezTerm は入れない**（サーバーでは不要なため）。デスクトップで使うなら
-  ディストリビューションのパッケージで入れる。設定ファイルのリンクは張るので、入れればそのまま使える
-- フォントは `~/.local/share/fonts` に入る
 - `open` は `xdg-open` に読み替わる。`rm` をゴミ箱送りにしたいなら `trash-cli` を入れる
-- TeX の PDF ビューアは Skim の代わりに Zathura
-- Ghostty の `Cmd` の操作は `Super` キーになる。`Ctrl+a` → `n`（素のシェルを開く）は macOS のみ
-- `Brewfile` は macOS 用（cask のアプリ・フォントを含む）なので、Linux では `install.sh brew` は使わない
+- 名前を並べれば（`install.sh nvim` など）ほかの設定も入れられるが、想定しているのは macOS だけ
 
 ## 入れたあとにやること
 
 1. **Ghostty を開く**（Spotlight で「Ghostty」）。そのまま herdr の画面になる。
-   Linux のサーバーなら代わりにログインし直すか `exec $SHELL -l` を実行し、`herdr` で起動する
+   Linux のサーバーなら代わりにログインし直すか `exec bash -l` を実行するだけでよい（以降の手順は不要）
 2. **`nvim` を一度起動する**。プラグインのダウンロードが始まるので、終わるまで待って `:q` で閉じる。
    言語ごとの LSP は、その言語のファイルを初めて開いたときに自動で入る
 3. **`~/.config/shell/local.sh` に自分用の設定を書く**（ssh 先など。下の「自分用の設定」）
