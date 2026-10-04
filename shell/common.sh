@@ -11,7 +11,8 @@ _path_prepend /opt/homebrew/opt/postgresql@17/bin
 # macOS標準
 _path_prepend /usr/bin
 
-# Homebrew の通常パス
+# Homebrew の通常パス（Linux では /home/linuxbrew）
+_path_prepend /home/linuxbrew/.linuxbrew/bin
 _path_prepend /opt/homebrew/bin
 
 # python3
@@ -39,6 +40,14 @@ export PATH
 export MANPATH="$HOME/man:$MANPATH"
 
 
+## Linux で macOS のコマンドを使う
+
+# open をデスクトップの既定アプリで開く xdg-open に読み替える
+if ! command -v open >/dev/null 2>&1 && command -v xdg-open >/dev/null 2>&1; then
+  open() { xdg-open "$@" >/dev/null 2>&1; }
+fi
+
+
 ## Alias
 
 alias l='ls -l'
@@ -51,8 +60,12 @@ alias ......='cd ../../../../..'
 alias od='open ~/Downloads'
 alias tmp='cd ~/tmp'
 
-## rmtrash
-command -v rmtrash >/dev/null 2>&1 && alias rm='rmtrash'
+## rm をゴミ箱送りにする（macOS は rmtrash、Linux は trash-cli）
+if command -v rmtrash >/dev/null 2>&1; then
+  alias rm='rmtrash'
+elif command -v trash-put >/dev/null 2>&1; then
+  alias rm='trash-put'
+fi
 
 ## Git commands
 alias gs='git status'
@@ -81,9 +94,10 @@ alias gssh='gcloud compute ssh'
 # herdr のペインの中は TERM=xterm-256color で、macOS 標準の terminfo には smxx
 # （取り消し線）が無い。Neovim は terminfo に無い属性を送らないので、markdown の
 # ~~取り消し線~~ や undercurl が見た目に反映されない。nvim にだけ拡張版を渡す。
-# 拡張版の terminfo（~/.terminfo/78/xterm-256color-herdr）が無ければ何もしない。
+# 拡張版の terminfo（macOS は ~/.terminfo/78/、Linux は ~/.terminfo/x/ の下）が無ければ何もしない。
 # 素の Ghostty なら TERM=xterm-ghostty なので、この条件には入らない。
-if [ "$TERM" = xterm-256color ] && [ -f ~/.terminfo/78/xterm-256color-herdr ]; then
+if [ "$TERM" = xterm-256color ] &&
+  { [ -f ~/.terminfo/78/xterm-256color-herdr ] || [ -f ~/.terminfo/x/xterm-256color-herdr ]; }; then
   nvim() { TERM=xterm-256color-herdr command nvim "$@"; }
 fi
 

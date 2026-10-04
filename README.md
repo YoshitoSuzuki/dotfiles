@@ -8,7 +8,8 @@
 - **WezTerm** は herdr が固まったときの予備のターミナル
 - 見た目は全部 Tokyo Night + JetBrains Mono Nerd Font で統一
 
-対象は **macOS（Apple Silicon）**。Intel Mac と Linux では動かない箇所がある。
+対象は **macOS** と **Linux**（どちらも Apple Silicon / ARM と x86_64）。
+Linux ではサーバー（ssh で入るだけの環境）でも使えるように、シェル・Neovim・herdr だけを入れる。
 
 ## 入れ方
 
@@ -50,9 +51,29 @@ git clone https://github.com/YoshitoSuzuki/dotfiles.git ~/dotfiles
 - 自動では更新されない。新しい版にするときは `~/.local/opt/<名前>` を消してから `install.sh tools`
 - **会社の Mac では、Homebrew を使うかどうかに関係なく、ソフトを入れてよいかを先に社内のルールで確認する**
 
+### Linux
+
+```sh
+sudo apt install git curl unzip zsh    # Debian / Ubuntu の場合。Fedora なら dnf
+git clone https://github.com/YoshitoSuzuki/dotfiles.git ~/dotfiles
+~/dotfiles/install.sh
+```
+
+Linux では `install.sh` は Homebrew を使わず、上の表と同じ公式の配布物を `~/.local` の下に入れる
+（`--no-brew` を付けたときと同じ。`sudo` は要らない）。macOS との違い:
+
+- **Ghostty / WezTerm は入れない**（サーバーでは不要なため）。デスクトップで使うなら
+  ディストリビューションのパッケージで入れる。設定ファイルのリンクは張るので、入れればそのまま使える
+- フォントは `~/.local/share/fonts` に入る
+- `open` は `xdg-open` に読み替わる。`rm` をゴミ箱送りにしたいなら `trash-cli` を入れる
+- TeX の PDF ビューアは Skim の代わりに Zathura
+- Ghostty の `Cmd` の操作は `Super` キーになる。`Ctrl+a` → `n`（素のシェルを開く）は macOS のみ
+- `Brewfile` は macOS 用（cask のアプリ・フォントを含む）なので、Linux では `install.sh brew` は使わない
+
 ## 入れたあとにやること
 
-1. **Ghostty を開く**（Spotlight で「Ghostty」）。そのまま herdr の画面になる
+1. **Ghostty を開く**（Spotlight で「Ghostty」）。そのまま herdr の画面になる。
+   Linux のサーバーなら代わりにログインし直すか `exec $SHELL -l` を実行し、`herdr` で起動する
 2. **`nvim` を一度起動する**。プラグインのダウンロードが始まるので、終わるまで待って `:q` で閉じる。
    言語ごとの LSP は、その言語のファイルを初めて開いたときに自動で入る
 3. **`~/.config/shell/local.sh` に自分用の設定を書く**（ssh 先など。下の「自分用の設定」）
@@ -133,7 +154,7 @@ export TEX_AUTHOR='名前'
 | `config/nvim/` | `~/.config/nvim` | LazyVim の設定（`lazy-lock.json` でプラグインの版を固定） |
 | `config/wezterm/` | `~/.config/wezterm` | 予備ターミナル。Ghostty と同じ見た目・キー配置 |
 | `config/terminfo/herdr.terminfo` | `~/.terminfo`（`tic` で登録） | 取り消し線・波線を足した `xterm-256color` |
-| `Brewfile` | | `install.sh brew` で入るアプリ |
+| `Brewfile` | | `install.sh brew` で入るアプリ（macOS） |
 | `local.sh.example` | `~/.config/shell/local.sh` | 自分用設定の雛形 |
 
 ## 更新

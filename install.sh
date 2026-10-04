@@ -1,13 +1,14 @@
 #!/bin/sh
-# このリポジトリの設定を、このMacにそのまま入れる。
+# このリポジトリの設定を、このマシン（macOS / Linux）にそのまま入れる。
 #
-#   ./install.sh                全部（下の順に実行）
+#   ./install.sh                全部（下の順に実行）。Linux では brew の代わりに tools になる
 #   ./install.sh --no-brew      全部。ただしアプリは Homebrew を使わずに入れる（brew の代わりに tools）
 #   ./install.sh nvim ghostty   一部だけ
 #
 #   brew      Homebrew と Brewfile のアプリ（Homebrew が無ければ入れる）
 #   tools     Homebrew を使わずにアプリを公式の配布物から入れる。管理者権限は要らない
-#             （コマンドは ~/.local/bin、アプリは ~/Applications、フォントは ~/Library/Fonts）
+#             （コマンドは ~/.local/bin、アプリは ~/Applications、フォントは ~/Library/Fonts。
+#             Linux ではフォントは ~/.local/share/fonts、Ghostty / WezTerm は入れない）
 #   zsh       ~/.zshrc（ZDOTDIR があればその下）
 #   bash      ~/.bashrc / ~/.bash_profile
 #   ghostty   ~/.config/ghostty
@@ -31,10 +32,25 @@ head_() { printf '\n\033[1m==> %s\033[0m\n' "$1"; }
 LOCAL_BIN=$HOME/.local/bin
 LOCAL_OPT=$HOME/.local/opt
 
+case $(uname -s) in
+  Darwin) OS=macos ;;
+  *) OS=linux ;;
+esac
+
 case $(uname -m) in
-  arm64) ARCH_GNU=aarch64 ARCH_GO=arm64 ARCH_NODE=arm64 ;;
+  arm64 | aarch64) ARCH_GNU=aarch64 ARCH_GO=arm64 ARCH_NODE=arm64 ;;
   *) ARCH_GNU=x86_64 ARCH_GO=x86_64 ARCH_NODE=x64 ;;
 esac
+
+# 各リリースのファイル名に入る OS 名
+if [ $OS = macos ]; then
+  TRIPLE=$ARCH_GNU-apple-darwin NVIM_OS=macos-$ARCH_GO LAZYGIT_OS=darwin_$ARCH_GO NODE_OS=darwin-$ARCH_NODE
+  FONT_DIR=$HOME/Library/Fonts
+else
+  TRIPLE=$ARCH_GNU-unknown-linux-musl NVIM_OS=linux-$ARCH_GO LAZYGIT_OS=linux_$ARCH_GNU NODE_OS=linux-$ARCH_NODE
+  [ $ARCH_GNU = aarch64 ] && LAZYGIT_OS=linux_arm64
+  FONT_DIR=$HOME/.local/share/fonts
+fi
 
 have() { command -v "$1" >/dev/null 2>&1; }
 
@@ -84,13 +100,25 @@ install_app() {  # install_app <アプリ名> <URL（.dmg か .zip）>
   echo "  ✓ ~/Applications/$1.app"
 }
 
+unzip_() {  # unzip_ <zip> <展開先>
+  if [ $OS = macos ]; then
+    ditto -x -k "$1" "$2"
+  else
+    unzip -q -o "$1" -d "$2"
+  fi
+}
+
 install_tools() {
   PATH="$LOCAL_BIN:$PATH"
 
-  head_ "アプリ（Homebrew を使わない）"
-  install_app Ghostty "$(curl -fsSL https://ghostty.org/download |
-    grep -oE 'https://release.files.ghostty.org/[0-9.]+/Ghostty.dmg' | head -1)"
-  install_app WezTerm "$(gh_asset wezterm/wezterm 'WezTerm-macos-[^"]*\.zip')"
+  # Linux のターミナルアプリはディストリビューションのパッケージで入れる（README）。
+  # サーバーでは不要なので、ここでは入れない
+  if [ $OS = macos ]; then
+    head_ "アプリ（Homebrew を使わない）"
+    install_app Ghostty "$(curl -fsSL https://ghostty.org/download |
+      grep -oE 'https://release.files.ghostty.org/[0-9.]+/Ghostty.dmg' | head -1)"
+    install_app WezTerm "$(gh_asset wezterm/wezterm 'WezTerm-macos-[^"]*\.zip')"
+  fi
 
   head_ "コマンド（~/.local/bin）"
   if have herdr; then
@@ -98,26 +126,27 @@ install_tools() {
   else
     curl -fsSL https://herdr.dev/install.sh | sh >/dev/null && echo "  ✓ herdr"
   fi
-  install_tar nvim "https://github.com/neovim/neovim/releases/latest/download/nvim-macos-$ARCH_GO.tar.gz" '*/bin/nvim'
-  install_tar rg "$(gh_asset BurntSushi/ripgrep "$ARCH_GNU-apple-darwin\.tar\.gz")" '*/rg'
-  install_tar fd "$(gh_asset sharkdp/fd "$ARCH_GNU-apple-darwin\.tar\.gz")" '*/fd'
-  install_tar lazygit "$(gh_asset jesseduffield/lazygit "darwin_$ARCH_GO\.tar\.gz")" lazygit
+  install_tar nvim "https://github.com/neovim/neovim/releases/latest/download/nvim-$NVIM_OS.tar.gz" '*/bin/nvim'
+  install_tar rg "$(gh_asset BurntSushi/ripgrep "$TRIPLE\.tar\.gz")" '*/rg'
+  install_tar fd "$(gh_asset sharkdp/fd "$TRIPLE\.tar\.gz")" '*/fd'
+  install_tar lazygit "$(gh_asset jesseduffield/lazygit "${LAZYGIT_OS}\.tar\.gz")" lazygit
   # Node.js は LTS の最新版
   node_version=$(curl -fsSL https://nodejs.org/dist/index.json 2>/dev/null | grep -o '"version":"[^"]*"[^}]*"lts":"' |
     head -1 | sed 's/"version":"\([^"]*\)".*/\1/')
-  install_tar node "https://nodejs.org/dist/$node_version/node-$node_version-darwin-$ARCH_NODE.tar.gz" \
+  install_tar node "https://nodejs.org/dist/$node_version/node-$node_version-$NODE_OS.tar.gz" \
     '*/bin/node' '*/bin/npm' '*/bin/npx'
 
-  head_ "フォント（~/Library/Fonts）"
-  if ls "$HOME/Library/Fonts"/JetBrainsMonoNerdFont-* >/dev/null 2>&1; then
+  head_ "フォント（$FONT_DIR）"
+  if ls "$FONT_DIR"/JetBrainsMonoNerdFont-* >/dev/null 2>&1; then
     echo "  - JetBrainsMono Nerd Font（導入済み）"
   else
     tmp=$(mktemp -d)
     curl -fsSL -o "$tmp/font.zip" https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
-    ditto -x -k "$tmp/font.zip" "$tmp/font"
-    mkdir -p "$HOME/Library/Fonts"
-    cp "$tmp/font"/*.ttf "$HOME/Library/Fonts/"
+    unzip_ "$tmp/font.zip" "$tmp/font"
+    mkdir -p "$FONT_DIR"
+    cp "$tmp/font"/*.ttf "$FONT_DIR/"
     rm -rf "$tmp"
+    have fc-cache && fc-cache -f "$FONT_DIR" >/dev/null
     echo "  ✓ JetBrainsMono Nerd Font"
   fi
 }
@@ -140,7 +169,7 @@ link() {  # link <リポジトリ内のパス> <置き場所>
 }
 
 ALL="brew zsh bash ghostty herdr nvim wezterm terminfo"
-if [ "${1:-}" = --no-brew ]; then
+if [ "${1:-}" = --no-brew ] || { [ $# = 0 ] && [ $OS = linux ]; }; then
   targets=$(echo "$ALL" | sed 's/^brew/tools/')
 else
   targets=${*:-$ALL}
@@ -149,10 +178,13 @@ for t in $targets; do
   case $t in
     brew)
       head_ "Homebrew と Brewfile のアプリ"
-      if ! command -v brew >/dev/null 2>&1 && [ ! -x /opt/homebrew/bin/brew ]; then
+      if ! command -v brew >/dev/null 2>&1 && [ ! -x /opt/homebrew/bin/brew ] &&
+        [ ! -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
       fi
-      [ -x /opt/homebrew/bin/brew ] && eval "$(/opt/homebrew/bin/brew shellenv)"
+      for b in /opt/homebrew/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
+        if [ -x "$b" ]; then eval "$("$b" shellenv)"; fi
+      done
       brew bundle --file="$DOTFILES_DIR/Brewfile"
       ;;
     tools)
