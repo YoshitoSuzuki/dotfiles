@@ -4,10 +4,21 @@
 // documentation: https://zed.dev/docs/key-bindings
 [
   {
-    // 右に開いたプレビューは、開いている md に合わせて切り替わる
+    // 右の分割にプレビューを開く（カーソルは編集画面に残る）
     "context": "Editor && vim_mode == normal && extension == md",
     "bindings": {
-      "space m p": "markdown::OpenFollowingPreview"
+      "space m p": "markdown::OpenPreviewToTheSide"
+    }
+  },
+  {
+    // ペインの移動（vim の ctrl-w と同じ操作を ctrl-space で）
+    "context": "Workspace",
+    "bindings": {
+      "ctrl-space h": "workspace::ActivatePaneLeft",
+      "ctrl-space j": "workspace::ActivatePaneDown",
+      "ctrl-space k": "workspace::ActivatePaneUp",
+      "ctrl-space l": "workspace::ActivatePaneRight",
+      "ctrl-space w": "workspace::ActivateNextPane"
     }
   }
 ]
