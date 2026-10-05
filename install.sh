@@ -219,9 +219,10 @@ for t in $targets; do
       link config/herdr/config.toml "$CONFIG_HOME/herdr/config.toml"
       ;;
     zed)
-      # settings.json だけ置く（同じ場所に Zed の実行時ファイルができるため）
+      # settings.json と keymap.json だけ置く（同じ場所に Zed の実行時ファイルができるため）
       head_ "zed"
       link config/zed/settings.json "$CONFIG_HOME/zed/settings.json"
+      link config/zed/keymap.json "$CONFIG_HOME/zed/keymap.json"
       for app in /Applications/Zed.app "$HOME/Applications/Zed.app"; do
         if [ -x "$app/Contents/MacOS/cli" ]; then
           mkdir -p "$LOCAL_BIN"
