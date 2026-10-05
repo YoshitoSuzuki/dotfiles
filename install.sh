@@ -168,7 +168,7 @@ link() {  # link <リポジトリ内のパス> <置き場所>
   echo "  ✓ $dest -> $src"
 }
 
-ALL="brew zsh bash ghostty herdr nvim wezterm terminfo"
+ALL="brew zsh bash ghostty herdr nvim wezterm zed terminfo"
 # Linux（ssh で入るサーバー）ではシェルの設定だけを入れる。
 # Neovim などの見た目はターミナルや screen の色の扱いに左右されるので、macOS だけで使う
 if [ $# = 0 ] && [ $OS = linux ]; then
@@ -217,6 +217,19 @@ for t in $targets; do
       # ディレクトリごとではなく config.toml だけ置く（同じ場所に herdr の実行時ファイルができるため）
       head_ "herdr"
       link config/herdr/config.toml "$CONFIG_HOME/herdr/config.toml"
+      ;;
+    zed)
+      # settings.json だけ置く（同じ場所に Zed の実行時ファイルができるため）
+      head_ "zed"
+      link config/zed/settings.json "$CONFIG_HOME/zed/settings.json"
+      for app in /Applications/Zed.app "$HOME/Applications/Zed.app"; do
+        if [ -x "$app/Contents/MacOS/cli" ]; then
+          mkdir -p "$LOCAL_BIN"
+          ln -sfn "$app/Contents/MacOS/cli" "$LOCAL_BIN/zed"
+          echo "  ✓ $LOCAL_BIN/zed -> $app/Contents/MacOS/cli"
+          break
+        fi
+      done
       ;;
     terminfo)
       head_ "terminfo"
