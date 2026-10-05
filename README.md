@@ -80,42 +80,7 @@ Linux では `install.sh` は `~/.bashrc` / `~/.bash_profile` のリンクと `~
 
 ## キー操作
 
-### Ghostty + herdr
-
-herdr の prefix は **`Ctrl+Space`**。Cmd キーの操作は Ghostty が herdr に転送している。
-
-| キー | 動作 |
-| --- | --- |
-| `Cmd+T` / `Cmd+W` | タブを開く / 閉じる |
-| `Cmd+Shift+[` / `Cmd+Shift+]` | 前 / 次のタブ |
-| `Cmd+1`〜`9` | 番号のタブへ |
-| `Ctrl+Space` → `\` / `-` | 左右 / 上下に分割 |
-| `Ctrl+Space` → `w` | ワークスペースを選ぶ（`j` / `k` で移動） |
-| `Cmd+Shift+,` | Ghostty の設定を読み直す |
-
-`Cmd+N` と Ghostty 自身のタブ・分割は無効にしている（同じ herdr が二重に映るだけになるため）。
-
-### herdr が使えないとき（Ghostty 単体）
-
-`Ctrl+a` のあとに次のキー。WezTerm でも同じ配置（Leader が `Ctrl+a`）。
-
-| キー | 動作 |
-| --- | --- |
-| `\` / `-` | 左右 / 上下に分割 |
-| `h` `j` `k` `l` | ペインの移動（Shift を足すとサイズ変更） |
-| `x` | ペインを閉じる |
-| `n` | herdr を通さないシェルを別ウィンドウで開く（herdr の停止・更新用） |
-
-herdr 自体が固まって入力を受け付けないときは WezTerm を開く。
-
-### Neovim
-
-LazyVim の標準のまま（Leader は `Space`。`Space` を押して待つと一覧が出る）。足しているもの:
-
-- Markdown を Obsidian のライブプレビューのように表示する（カーソル行だけ記法に戻る）
-- スニペット: `main` と打って `Tab` で雛形を展開（C++ / Go / TeX / .gitignore）。
-  TeX の著者名は環境変数 `TEX_AUTHOR` から入る
-- TypeScript / React / Tailwind / Go / Java / R / TeX / PHP の LSP と整形
+Ghostty + herdr・Neovim・Zed・シェルの操作キーは [docs/keys.md](docs/keys.md) にまとめている。
 
 ## 自分用の設定
 
