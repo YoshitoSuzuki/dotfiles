@@ -13,5 +13,8 @@ brew "ripgrep"                        # 全文検索（<leader>/）
 brew "fd"                             # ファイル検索（<leader><space>）
 brew "lazygit"                        # git の画面（<leader>gg）
 
+# エディタ
+cask "zed"                            # GUI のエディタ。Markdown を書くときに使う
+
 # シェル
 brew "rmtrash"                        # rm をゴミ箱送りにする

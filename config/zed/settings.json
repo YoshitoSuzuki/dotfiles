@@ -19,6 +19,9 @@
   "vim": {
     "use_system_clipboard": "always"
   },
+  "auto_install_extensions": {
+    "html": true
+  },
   "agent_servers": {
     "claude-acp": {
       "type": "registry"

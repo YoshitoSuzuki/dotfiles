@@ -8,13 +8,14 @@
 #   brew      Homebrew と Brewfile のアプリ（Homebrew が無ければ入れる）
 #   tools     Homebrew を使わずにアプリを公式の配布物から入れる。管理者権限は要らない
 #             （コマンドは ~/.local/bin、アプリは ~/Applications、フォントは ~/Library/Fonts。
-#             Linux ではフォントは ~/.local/share/fonts、Ghostty / WezTerm は入れない）
+#             Linux ではフォントは ~/.local/share/fonts、Ghostty / WezTerm / Zed は入れない）
 #   zsh       ~/.zshrc（ZDOTDIR があればその下）
 #   bash      ~/.bashrc / ~/.bash_profile
 #   ghostty   ~/.config/ghostty
 #   herdr     ~/.config/herdr/config.toml
 #   nvim      ~/.config/nvim
 #   wezterm   ~/.config/wezterm
+#   zed       ~/.config/zed/settings.json / keymap.json と zed コマンド
 #   terminfo  herdr の中の Neovim で取り消し線・波線を出すための terminfo を登録
 #
 # 設定はシンボリックリンクで置く。既にファイルがあれば <名前>.backup.<日時> に退避する。
@@ -118,6 +119,7 @@ install_tools() {
     install_app Ghostty "$(curl -fsSL https://ghostty.org/download |
       grep -oE 'https://release.files.ghostty.org/[0-9.]+/Ghostty.dmg' | head -1)"
     install_app WezTerm "$(gh_asset wezterm/wezterm 'WezTerm-macos-[^"]*\.zip')"
+    install_app Zed "https://zed.dev/api/releases/stable/latest/Zed-$ARCH_GNU.dmg"
   fi
 
   head_ "コマンド（~/.local/bin）"

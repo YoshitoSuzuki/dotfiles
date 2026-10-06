@@ -6,7 +6,7 @@
 - シェルは **zsh** と **bash** のどちらでも同じエイリアス・PATH・関数が使える
 - エディタは **Neovim**（[LazyVim](https://www.lazyvim.org/) ベース。Markdown を書きながら完成形で表示する）
 - **WezTerm** は herdr が固まったときの予備のターミナル
-- **Zed** は GUI のエディタ（設定だけ。アプリは各自で入れる）
+- **Zed** は GUI のエディタ（Markdown を書くとき用。vim モードで、右にプレビューを開ける）
 - 見た目は全部 Tokyo Night + JetBrains Mono Nerd Font で統一
 
 対象は **macOS** と **Linux**（どちらも Apple Silicon / ARM と x86_64）。
@@ -41,7 +41,7 @@ git clone https://github.com/YoshitoSuzuki/dotfiles.git ~/dotfiles
 
 | もの | 入手元 | 入る場所 |
 | --- | --- | --- |
-| Ghostty / WezTerm | ghostty.org / GitHub Releases | `~/Applications` |
+| Ghostty / WezTerm / Zed | ghostty.org / GitHub Releases / zed.dev | `~/Applications` |
 | herdr | herdr.dev の公式インストーラ | `~/.local/bin` |
 | Neovim / ripgrep / fd / lazygit | GitHub Releases | `~/.local/opt/<名前>`（コマンドは `~/.local/bin` にリンク） |
 | Node.js（LTS の最新版） | nodejs.org | 同上 |
@@ -116,7 +116,7 @@ export TEX_AUTHOR='名前'
 | `config/herdr/config.toml` | `~/.config/herdr/config.toml` | prefix キー、テーマ、サイドバーの表示 |
 | `config/nvim/` | `~/.config/nvim` | LazyVim の設定（`lazy-lock.json` でプラグインの版を固定） |
 | `config/wezterm/` | `~/.config/wezterm` | 予備ターミナル。Ghostty と同じ見た目・キー配置 |
-| `config/zed/settings.json` | `~/.config/zed/settings.json` | vim モード、保存時の整形、Markdown の折り返し。`zed` コマンドも `~/.local/bin` に置く |
+| `config/zed/settings.json` / `keymap.json` | `~/.config/zed/` の同名ファイル | vim モード、保存時の整形、Markdown の折り返し、拡張の自動導入、プレビューとペイン移動のキー。`zed` コマンドも `~/.local/bin` に置く |
 | `config/terminfo/herdr.terminfo` | `~/.terminfo`（`tic` で登録） | 取り消し線・波線を足した `xterm-256color` |
 | `Brewfile` | | `install.sh brew` で入るアプリ（macOS） |
 | `local.sh.example` | `~/.config/shell/local.sh` | 自分用設定の雛形 |
