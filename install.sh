@@ -17,6 +17,7 @@
 #   wezterm   ~/.config/wezterm
 #   zed       ~/.config/zed/settings.json / keymap.json と zed コマンド
 #   terminfo  herdr の中の Neovim で取り消し線・波線を出すための terminfo を登録
+#   claude    Claude Code の共通ルール・フック・スキル（~/.claude。既存の設定は置き換えずに足す）
 #
 # 設定はシンボリックリンクで置く。既にファイルがあれば <名前>.backup.<日時> に退避する。
 # 何度実行しても同じ結果になる。
@@ -170,7 +171,55 @@ link() {  # link <リポジトリ内のパス> <置き場所>
   echo "  ✓ $dest -> $src"
 }
 
-ALL="brew zsh bash ghostty herdr nvim wezterm zed terminfo"
+install_claude() {
+  claude_dir=$HOME/.claude
+  link claude "$claude_dir/dotfiles"
+
+  # CLAUDE.md は置き換えない。共通ルールの読み込み行が無いときだけ先頭に足す
+  memo=$claude_dir/CLAUDE.md
+  import='@~/.claude/dotfiles/CLAUDE.md'
+  if [ ! -f "$memo" ]; then
+    printf '%s\n\n## このマシン固有\n\n' "$import" >"$memo"
+    echo "  ✓ $memo を作成（このマシンだけの指示はここに書く）"
+  elif grep -qxF "$import" "$memo"; then
+    echo "  - ${memo}（共通ルールを読み込み済み）"
+  else
+    cp "$memo" "$memo.backup.$STAMP"
+    { printf '%s\n\n' "$import"; cat "$memo.backup.$STAMP"; } >"$memo"
+    echo "  ✓ $memo の先頭に共通ルールの読み込みを追加（元は $memo.backup.$STAMP）"
+  fi
+
+  # フックはリンクではなくコピーする（dotfiles が壊れていても動くように）
+  mkdir -p "$claude_dir/hooks"
+  for f in "$DOTFILES_DIR"/claude/hooks/*; do
+    dest=$claude_dir/hooks/$(basename "$f")
+    if cmp -s "$f" "$dest"; then
+      echo "  - ${dest}（設定済み）"
+      continue
+    fi
+    if [ -e "$dest" ]; then
+      mv "$dest" "$dest.backup.$STAMP"
+      echo "  ! 既存の $dest を $dest.backup.$STAMP に退避"
+    fi
+    cp "$f" "$dest"
+    echo "  ✓ $dest"
+  done
+
+  # スキルは同じ名前のものが無いときだけ置く（そのマシンで手を入れたものは残す）
+  for d in "$DOTFILES_DIR"/claude/skills/*/; do
+    name=$(basename "$d")
+    dest=$claude_dir/skills/$name
+    if { [ -e "$dest" ] || [ -L "$dest" ]; } && [ "$(readlink "$dest")" != "$DOTFILES_DIR/claude/skills/$name" ]; then
+      echo "  - ${dest}（既にあるので置かない）"
+    else
+      link "claude/skills/$name" "$dest"
+    fi
+  done
+
+  python3 "$DOTFILES_DIR/claude/settings-merge.py"
+}
+
+ALL="brew zsh bash ghostty herdr nvim wezterm zed terminfo claude"
 # Linux（ssh で入るサーバー）ではシェルの設定だけを入れる。
 # Neovim などの見た目はターミナルや screen の色の扱いに左右されるので、macOS だけで使う
 if [ $# = 0 ] && [ $OS = linux ]; then
@@ -238,6 +287,10 @@ for t in $targets; do
       head_ "terminfo"
       tic -x -o "$HOME/.terminfo" "$DOTFILES_DIR/config/terminfo/herdr.terminfo"
       echo "  ✓ xterm-256color-herdr を登録"
+      ;;
+    claude)
+      head_ "Claude Code"
+      install_claude
       ;;
     *)
       echo "不明な指定: $t" >&2

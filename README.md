@@ -8,6 +8,7 @@
 - **WezTerm** は herdr が固まったときの予備のターミナル
 - **Zed** は GUI のエディタ（Markdown を書くとき用。vim モードで、右にプレビューを開ける）
 - 見た目は全部 Tokyo Night + JetBrains Mono Nerd Font で統一
+- **Claude Code** の共通ルール（CLAUDE.md）・フック・スキル・ナレッジも入れられる（下の「Claude Code」）
 
 対象は **macOS** と **Linux**（どちらも Apple Silicon / ARM と x86_64）。
 Linux（ssh で入るだけのサーバー）では **bash の設定だけ**を入れる。
@@ -29,10 +30,11 @@ git clone https://github.com/YoshitoSuzuki/dotfiles.git ~/dotfiles
    `--no-brew` のときは Homebrew を使わずに入れる（下の「Homebrew を使わない場合」）
 2. 設定ファイルをシンボリックリンクで置く。既にあるファイルは `<名前>.backup.<日時>` に退避する
 3. herdr の中の Neovim で取り消し線と波線を出すための terminfo を登録する
-4. 自分用の設定ファイル `~/.config/shell/local.sh` を雛形から作る
+4. Claude Code の共通設定を `~/.claude` に足す（既存の設定は置き換えない。下の「Claude Code」）
+5. 自分用の設定ファイル `~/.config/shell/local.sh` を雛形から作る
 
 一部だけ入れたいときは名前を並べる: `install.sh nvim ghostty`
-（`brew` `tools` `zsh` `bash` `ghostty` `herdr` `nvim` `wezterm` `zed` `terminfo`）
+（`brew` `tools` `zsh` `bash` `ghostty` `herdr` `nvim` `wezterm` `zed` `terminfo` `claude`）
 
 ### Homebrew を使わない場合
 
@@ -78,6 +80,37 @@ Linux では `install.sh` は `~/.bashrc` / `~/.bash_profile` のリンクと `~
 4. （Claude Code を使うなら）`herdr integration install claude` で、herdr のサイドバーに
    エージェントの状態（作業中・待機中）が出るようになる
 
+## Claude Code
+
+`install.sh claude` で、どのマシンの Claude Code でも同じルールで動くようにする。
+中身は public なので、**個人情報・会社の情報・特定のマシンに依存する内容は入れない**
+（それらは各マシンの `~/.claude/CLAUDE.md` と `~/.claude/knowledge/` に書く）。
+
+```sh
+git clone https://github.com/YoshitoSuzuki/dotfiles.git ~/dotfiles
+~/dotfiles/install.sh claude
+```
+
+やること（何度実行しても同じ結果になる。既存の設定は置き換えない）:
+
+1. `~/.claude/dotfiles` を `claude/` へのリンクにする
+2. `~/.claude/CLAUDE.md` の先頭に `@~/.claude/dotfiles/CLAUDE.md`（共通ルールの読み込み）を足す。
+   ファイルが無ければ作る。既にあれば元を `CLAUDE.md.backup.<日時>` に退避してから足す
+3. `claude/hooks/` を `~/.claude/hooks/` に**コピー**する（リンクにしないのは、dotfiles の場所を
+   変えたりブランチを切り替えたりしてもフックが動き続けるようにするため）
+4. `claude/skills/` のスキルを、同じ名前のものが無いときだけリンクする
+5. `~/.claude/settings.json` にフックの設定を、無ければ足す（permissions や model には触らない）
+
+| フック | いつ | 何をする |
+| --- | --- | --- |
+| `japanese-reply.py` | メッセージを送ったとき | 日本語のメッセージなら「日本語の丁寧語で返す」と Claude に念押しする |
+| `check-setup.sh` | セッション開始時 | 共通ルールが読み込めない状態（リンク切れなど）なら画面に警告を出す。正常なら何も出さない |
+
+確認: `claude` を起動して `/memory` を開き、`~/.claude/dotfiles/CLAUDE.md` が読み込まれていればよい。
+
+**会社の Mac では dotfiles を編集・コミットしない**（`git pull` だけにする）。会社の git 設定の
+メールアドレスで public リポジトリにコミットしてしまうのを防ぐため。共通ルールを直すのは個人の Mac から。
+
 ## キー操作
 
 Ghostty + herdr・Neovim・Zed・シェルの操作キーは [docs/keys.md](docs/keys.md) にまとめている。
@@ -120,6 +153,11 @@ export TEX_AUTHOR='名前'
 | `config/terminfo/herdr.terminfo` | `~/.terminfo`（`tic` で登録） | 取り消し線・波線を足した `xterm-256color` |
 | `Brewfile` | | `install.sh brew` で入るアプリ（macOS） |
 | `local.sh.example` | `~/.config/shell/local.sh` | 自分用設定の雛形 |
+| `claude/CLAUDE.md` | `~/.claude/CLAUDE.md` から読み込む | Claude Code の共通ルール |
+| `claude/hooks/` | `~/.claude/hooks/`（コピー） | Claude Code のフック（上の「Claude Code」） |
+| `claude/skills/` | `~/.claude/skills/` | Claude Code のスキル（docs/ を整備する project-docs） |
+| `claude/knowledge/` | `~/.claude/dotfiles/knowledge/` | どのマシンでも使える知識。Claude が作業前に `INDEX.md` を読む |
+| `claude/settings-merge.py` | | `~/.claude/settings.json` にフックの設定を足す |
 
 ## 更新
 
@@ -129,6 +167,8 @@ git -C ~/dotfiles pull
 
 設定はリンクなので pull した時点で反映される。開いているものは読み直す:
 シェルは `exec $SHELL`、Ghostty は `Cmd+Shift+,`、herdr は `herdr server reload-config`、Neovim は再起動。
+Claude Code の共通ルールは次に起動したセッションから反映される。`claude/hooks/` が変わったときだけ
+`install.sh claude` を実行し直す（フックはコピーなので pull だけでは更新されない）。
 
 ## zsh と bash の違い
 
