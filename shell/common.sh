@@ -86,7 +86,7 @@ alias ai='claude'
 alias lai='open http://localhost:11500'
 
 ## Google Cloud
-alias gssh='gcloud compute ssh'
+alias gssh='gcloud compute ssh --tunnel-through-iap'
 
 
 ## Neovim に渡す TERM
