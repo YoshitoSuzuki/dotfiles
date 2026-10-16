@@ -77,4 +77,33 @@ PROMPT='%F{cyan}%2~%f $ '
 RPROMPT=' ###'
 
 
+## herdr のスペース名
+
+# サイドバーのスペース名を、プロンプトと同じく1つ上のディレクトリまで（%2~）出す。
+# herdr にはその設定が無いので、プロンプトのたびにスペースの代表ペイン（最初のタブの
+# 最初のペイン）の場所を $dir として herdr に送り、config.toml の [ui.sidebar.spaces] で
+# workspace の代わりに表示している。自分で名前を付けたスペースはその名前を送る。
+_herdr_space_dir() {
+  local ws=${1:-$HERDR_WORKSPACE_ID} tab cwd label name dir
+  tab=$(herdr tab list --workspace $ws | jq -r '.result.tabs[0].tab_id')
+  cwd=$(herdr pane list | jq -r --arg t $tab 'first(.result.panes[] | select(.tab_id == $t)) | .cwd')
+  label=$(herdr workspace get $ws | jq -r '.result.workspace.label')
+  [[ -d $cwd ]] || return
+  # herdr が自動で付ける名前（git リポジトリならその名前、それ以外はディレクトリ名）
+  name=$(git -C $cwd rev-parse --show-toplevel 2>/dev/null) || name=$cwd
+  [[ $name == $HOME ]] && name='~' || name=${name:t}
+  if [[ $label == $name ]]; then
+    dir=$(cd -q $cwd && print -P '%2~')
+  else
+    dir=$label
+  fi
+  herdr workspace report-metadata $ws --source zsh --token "dir=$dir" >/dev/null
+}
+if [[ -n $HERDR_WORKSPACE_ID ]] && (( $+commands[herdr] && $+commands[jq] )); then
+  autoload -Uz add-zsh-hook
+  _herdr_space_dir_precmd() { _herdr_space_dir &>/dev/null &! }
+  add-zsh-hook precmd _herdr_space_dir_precmd
+fi
+
+
 [ -f "$LOCAL_SHELL_DIR/local.zsh" ] && source "$LOCAL_SHELL_DIR/local.zsh"
