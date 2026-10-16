@@ -9,32 +9,147 @@
 - **Zed** は GUI のエディタ（Markdown を書くとき用。vim モードで、右にプレビューを開ける）
 - 見た目は全部 Tokyo Night + JetBrains Mono Nerd Font で統一
 - **Claude Code** の共通ルール（CLAUDE.md）・フック・スキル・ナレッジも入れられる（下の「Claude Code」）
+- 自作コマンドなど**別のリポジトリで管理しているもの**も clone して反映できる（下の「モジュール」）
 
 対象は **macOS** と **Linux**（どちらも Apple Silicon / ARM と x86_64）。
-Linux（ssh で入るだけのサーバー）では **bash の設定だけ**を入れる。
+OS と GUI の有無は自動で判定し、入れるものを変える（ssh で入るだけの Linux にはアプリを入れない）。
 
 ## 入れ方
 
 ```sh
-xcode-select --install     # git が無ければ。ダイアログでインストールを押す
+xcode-select --install     # macOS で git が無ければ。Linux なら sudo apt install git curl
 git clone https://github.com/YoshitoSuzuki/dotfiles.git ~/dotfiles
-~/dotfiles/install.sh      # Homebrew を使わないなら  ~/dotfiles/install.sh --no-brew
+~/dotfiles/install.sh      # 環境に合わせたオプションは下の表
 ```
 
 `xcode-select --install` で入るのは Xcode 本体ではなく、git やコンパイラなどのコマンド一式
 （Command Line Tools）。Neovim がプラグインの取得と構文解析器のビルドに使うので必要。
 
+| 環境 | コマンド | 入るもの |
+| --- | --- | --- |
+| 自分用・人に見せる Mac | `install.sh` | アプリ・設定の一式（Homebrew）と自作コマンド（`~/bin`） |
+| Homebrew を使えない Mac | `install.sh --no-brew` | 同じものを公式の配布物から `~` の下に入れる（管理者権限は要らない） |
+| Linux（デスクトップ） | `install.sh` | 設定の一式とフォント、CLI のツール。ターミナルアプリ本体はパッケージで入れる（下の「Linux（GUI）」） |
+| Linux（ssh で入るだけ） | `install.sh` | シェルの設定（bash、zsh があれば zsh）と自作コマンドだけ |
+| Linux（ssh、Neovim も使う） | `install.sh --with nvim` | 上に加えて Neovim・ripgrep・fd・lazygit・Node.js を `~/.local` に |
+| 会社の PC | `install.sh --work` | 上のどれかに加えて、会社の PC 向けの安全策（下の「オプション」） |
+| 自分の PC（個人の設定も入れる） | `install.sh --private` | 上のどれかに加えて、private リポジトリの設定と自作コマンド |
+
 `install.sh` がやること（何度実行しても同じ結果になる）:
 
-1. Homebrew が無ければ入れる（パスワードを聞かれる）。`Brewfile` のアプリを入れる。
-   `--no-brew` のときは Homebrew を使わずに入れる（下の「Homebrew を使わない場合」）
-2. 設定ファイルをシンボリックリンクで置く。既にあるファイルは `<名前>.backup.<日時>` に退避する
-3. herdr の中の Neovim で取り消し線と波線を出すための terminfo を登録する
-4. Claude Code の共通設定を `~/.claude` に足す（既存の設定は置き換えない。下の「Claude Code」）
-5. 自分用の設定ファイル `~/.config/shell/local.sh` を雛形から作る
+1. モジュール（自作コマンドなどのリポジトリ）を clone し、コマンドを `~/bin` にリンクする（下の「モジュール」）
+2. アプリを入れる。macOS は Homebrew と `Brewfile`（無ければ Homebrew から入れる。パスワードを聞かれる）。
+   `--no-brew` や Linux のデスクトップでは公式の配布物から `~` の下に入れる
+3. 設定ファイルをシンボリックリンクで置く。既にあるファイルは `<名前>.backup.<日時>` に退避する
+4. herdr の中の Neovim で取り消し線と波線を出すための terminfo を登録する
+5. `--work` / `--private` のときは Claude Code の共通設定を `~/.claude` に足す（下の「Claude Code」）
+6. 自分用の設定ファイル `~/.config/shell/local.sh` が無ければ雛形から作る
 
-一部だけ入れたいときは名前を並べる: `install.sh nvim ghostty`
-（`brew` `tools` `zsh` `bash` `ghostty` `herdr` `nvim` `wezterm` `zed` `terminfo` `claude`）
+何が入るかは、先に `install.sh --dry-run`（ほかのオプションと組み合わせてよい）で確かめられる。
+
+## オプション
+
+| オプション | 何をするか | 付けないとき |
+| --- | --- | --- |
+| `--private` | public の一式に、private リポジトリ（`DOTFILES_PRIVATE_REPO`）を重ねる。そのリポジトリを `~/dotfiles-private` に clone し、そこの `modules.tsv` のモジュールと `install.sh`（個人の設定）を入れる。Claude Code の共通設定も入れる。**ssh で GitHub に接続できないと何もせずに止まる** | public（誰が使ってもよい設定だけ） |
+| `--work` | 会社の PC 用。public の一式に次の4つを足す: Claude Code の共通設定 / `~/.claude/CLAUDE.md` に「会社のPC」と書く（共通ルールの「会社のマシンでは」を Claude が判断できるように） / `~/.config/git/work.gitconfig` の雛形を作り git から読み込む（会社のメール・プロキシなどはここに書く） / この dotfiles の push を無効にする（会社のメールで public のリポジトリにコミットしないように。pull はできる） | 同上 |
+| `--with <名前,...>` | 既定の一覧に足す。設定の名前でもモジュールの名前でもよい。カンマ区切りか、`--with` を繰り返す。`--with nvim` は Neovim 本体（`tools`）も一緒に入れる | 既定の一覧のまま |
+| `--without <名前,...>` | 既定の一覧から除く（`--all` と組み合わせると、全部から除く） | 同上 |
+| `--all` | 入れられるものを全部入れる（既定で入らない `opt` のモジュールと `claude` を含む）。GUI の無い環境では herdr・アプリ・ターミナルの設定は入れない | 環境ごとの既定 |
+| `--gui` / `--no-gui` | GUI の有無の自動判定を上書きする。自動判定は「macOS は常にあり、Linux は `$DISPLAY` / `$WAYLAND_DISPLAY` / `$XDG_CURRENT_DESKTOP` のどれかがあればあり」 | 自動判定 |
+| `--no-brew` | Homebrew を使わない。`brew` の代わりに `tools` `apps` `fonts` を入れる（macOS の GUI のときだけ意味がある。Linux はもともと Homebrew を使わない） | macOS では Homebrew を使う |
+| `--no-modules` | モジュールを clone・更新しない（設定だけ入れる） | モジュールも入れる |
+| `--dry-run` | 判定結果（OS・GUI・公開範囲）と、入れる設定・モジュールを表示するだけで、何も変えない | 実際に入れる |
+| `-h` / `--help` | 使い方を表示する | |
+| 名前を並べる（`install.sh nvim ghostty`） | 並べた名前のものだけを入れる。既定の一覧とモジュールの既定は使わない（モジュールも名前を書けば入る） | |
+
+- `--private` と `--work` は同時に指定できない（エラーになる）
+- 環境変数 `DOTFILES_PRIVATE_REPO` で `--private` が clone するリポジトリを変えられる（既定は作者の private リポジトリ。
+  ほかの人が使うなら、自分の private リポジトリを指定する。中身の決まりは下の「private リポジトリ」）
+
+### 環境ごとの既定の一覧
+
+| 環境 | 設定 |
+| --- | --- |
+| macOS | `brew zsh bash ghostty herdr nvim wezterm zed terminfo`（`--no-brew` なら `brew` の代わりに `tools apps fonts`） |
+| Linux（GUI あり） | `tools apps fonts zsh bash ghostty herdr nvim wezterm zed terminfo` |
+| Linux（GUI なし） | `zsh bash`（zsh が入っていないときは `bash` だけ）。`--all` なら `tools zsh bash nvim terminfo claude` |
+| `--work` / `--private` | 上に `claude` を足す |
+
+### 設定の名前（`--with` / `--without` / 名前を並べるときに使う）
+
+| 名前 | 入るもの |
+| --- | --- |
+| `brew` | Homebrew と `Brewfile` のアプリ（macOS） |
+| `tools` | Neovim・ripgrep・fd・lazygit・Node.js（LTS）を `~/.local/opt` に入れ、コマンドを `~/.local/bin` にリンク |
+| `apps` | herdr を `~/.local/bin` に。macOS では Ghostty・WezTerm・Zed を `~/Applications` に。Linux ではターミナルアプリが無ければ入れ方を表示するだけ |
+| `fonts` | JetBrains Mono Nerd Font（macOS は `~/Library/Fonts`、Linux は `~/.local/share/fonts`） |
+| `zsh` | `~/.zshrc`（`ZDOTDIR` があればその下） |
+| `bash` | `~/.bashrc` / `~/.bash_profile` |
+| `ghostty` / `nvim` / `wezterm` | `~/.config/<名前>` |
+| `herdr` | `~/.config/herdr/config.toml` |
+| `zed` | `~/.config/zed/settings.json` / `keymap.json` と `zed` コマンド |
+| `terminfo` | herdr の中の Neovim で取り消し線・波線を出すための terminfo |
+| `claude` | Claude Code の共通ルール・フック・スキル（下の「Claude Code」） |
+
+モジュールの名前は `modules.tsv` を見る（下の「モジュール」）。
+
+## モジュール
+
+自作コマンドなど、**別のリポジトリで管理しているもの**を clone して反映させる仕組み。
+一覧は `modules.tsv`（タブ区切り）に書く。
+
+| 列 | 中身 |
+| --- | --- |
+| 名前 | `--with` / `--without` で使う名前 |
+| 種類 | `data`（置き場所に clone するだけ）か `tool`（clone して、コマンドを `~/bin` にリンクする） |
+| OS | `all` / `macos` / `linux` |
+| 既定 | `yes`（既定で入る）か `opt`（`--with <名前>` か `--all` のときだけ入る） |
+| リポジトリ | clone する URL |
+| 置き場所 | `-` なら `~/bin-src/<名前>` |
+| コマンド | `tool` のとき、`~/bin` にリンクするファイル（リポジトリ内のパスを空白区切り） |
+
+今の一覧:
+
+| 名前 | 種類 | 既定 | 中身 |
+| --- | --- | --- | --- |
+| `bin` | data | yes | 小さな自作コマンド（`crun` `cprun` `md` `ch`）。[bin-commands](https://github.com/YoshitoSuzuki/bin-commands) を `~/bin` に clone する（PATH に入っている） |
+| `webpin` | tool | opt | [webpin](https://github.com/YoshitoSuzuki/webpin)。`~/bin-src/webpin` に clone し、`~/bin/webpin` にリンクする |
+
+置き場所の決まり:
+
+```
+~/bin/          小さなコマンドのリポジトリ（実体はここ。ここで編集して push する）。PATH に入っている
+  crun  md …
+  webpin -> ~/bin-src/webpin/bin/webpin    install.sh が張るリンク
+~/bin-src/      大きなツールのリポジトリを並べる場所（ここ自体は Git で管理しない）
+  webpin/       それぞれ独立したリポジトリ。ここで編集して push する
+```
+
+- リポジトリの中に別のリポジトリは入れない（横に並べる）
+- `~/bin` に張ったリンクは `~/bin/.git/info/exclude` の `# >>> dotfiles modules` から `# <<< dotfiles modules` までに
+  書き込んで、`~/bin` のリポジトリの Git 管理から外す。`.gitignore` と違ってコミットされないので、
+  リンクの名前が公開されない。この範囲は install.sh が毎回書き直すので、手で書く除外はその外に書く
+- 既に置き場所にリポジトリがあれば `git pull --ff-only` だけをする。**別のリポジトリが置かれていたら何もしない**
+  （警告を出す。入れ替えるなら手で退避してから実行し直す）
+- 置き場所に Git でないファイルが既にあるとき（Claude Code が先に作った `~/.claude` など）は、
+  同じ名前のファイルを `.backup.<日時>` に退避してから、リポジトリの内容を重ねる
+- `~/bin` に同じ名前の実体のファイルがあるときは、リンクを張らずに警告する
+- どのモジュールにも属さなくなったリンクは警告だけを出す（自動では消さない）
+- リポジトリの直下に `install.sh` があれば、clone・更新のあとに実行する（常駐ジョブの登録など、
+  反映の手順は各リポジトリが自分で持つ）
+
+## private リポジトリ
+
+`--private` で重ねるリポジトリ（既定は `~/dotfiles-private` に clone）。公開できない設定と、
+private のモジュールを置く。このリポジトリが中身に求めるのは次の2つだけ。
+
+| ファイル | 役割 |
+| --- | --- |
+| `modules.tsv` | 書き方は上の「モジュール」と同じ。**同じ名前があれば public の一覧より優先される**（例: `bin` を private の自作コマンドのリポジトリに差し替える） |
+| `install.sh` | 個人の設定を入れるスクリプト。public の一式とモジュールを入れたあとに実行される |
+
+## 環境ごとの補足
 
 ### Homebrew を使わない場合
 
@@ -54,26 +169,28 @@ git clone https://github.com/YoshitoSuzuki/dotfiles.git ~/dotfiles
 - 自動では更新されない。新しい版にするときは `~/.local/opt/<名前>` を消してから `install.sh tools`
 - **会社の Mac では、Homebrew を使うかどうかに関係なく、ソフトを入れてよいかを先に社内のルールで確認する**
 
-### Linux
+### Linux（ssh で入るだけ）
 
-```sh
-sudo apt install git    # Debian / Ubuntu の場合。Fedora なら dnf
-git clone https://github.com/YoshitoSuzuki/dotfiles.git ~/dotfiles
-~/dotfiles/install.sh
-```
+既定ではシェルの設定（bash、zsh が入っていれば zsh）と自作コマンドだけを入れる。
+エイリアス・PATH・関数は macOS と同じものが使える。
 
-Linux では `install.sh` は `~/.bashrc` / `~/.bash_profile` のリンクと `~/.config/shell/local.sh` の
-雛形だけを置く。アプリ（Neovim・herdr など）やほかの設定は入れない。
-サーバーでは GNU screen など色の扱いが違う環境で開くことが多く、Neovim の配色が崩れるため
-（screen 4.x はフルカラーを扱えない）。エイリアス・PATH・関数は macOS と同じものが使える。
-
+- Neovim も使うなら `install.sh --with nvim`。プラグインのビルドに git と C コンパイラが要る
+  （Debian / Ubuntu なら `sudo apt install git build-essential`。無ければ install.sh が警告する）
+- GNU screen 4.x などフルカラーを扱えない端末（`$TERM` が `screen*` で `$COLORTERM` が無い）では、
+  Neovim は 256 色の配色になる
 - `open` は `xdg-open` に読み替わる。`rm` をゴミ箱送りにしたいなら `trash-cli` を入れる
-- 名前を並べれば（`install.sh nvim` など）ほかの設定も入れられるが、想定しているのは macOS だけ
+
+### Linux（GUI）
+
+デスクトップのセッションから実行すると、設定の一式・フォント・CLI のツール・herdr を入れる。
+ターミナルアプリ本体は管理者権限が要るので自動では入れない。無ければ install.sh が知らせるので、
+ディストリビューションのパッケージか公式の手順で入れる（Ghostty: <https://ghostty.org/docs/install/binary>、
+WezTerm: <https://wezterm.org/install/linux.html>、Zed: `curl -f https://zed.dev/install.sh | sh`）。
 
 ## 入れたあとにやること
 
 1. **Ghostty を開く**（Spotlight で「Ghostty」）。そのまま herdr の画面になる。
-   Linux のサーバーなら代わりにログインし直すか `exec bash -l` を実行するだけでよい（以降の手順は不要）
+   ssh で入るだけの Linux なら、代わりにログインし直すか `exec bash -l` を実行するだけでよい（以降の手順は不要）
 2. **`nvim` を一度起動する**。プラグインのダウンロードが始まるので、終わるまで待って `:q` で閉じる。
    言語ごとの LSP は、その言語のファイルを初めて開いたときに自動で入る
 3. **`~/.config/shell/local.sh` に自分用の設定を書く**（ssh 先など。下の「自分用の設定」）
@@ -114,6 +231,7 @@ git clone https://github.com/YoshitoSuzuki/dotfiles.git ~/dotfiles
 ## キー操作
 
 Ghostty + herdr・Neovim・Zed・シェルの操作キーは [docs/keys.md](docs/keys.md) にまとめている。
+公開範囲・GUI の判定とモジュールの仕組みは [docs/profiles.md](docs/profiles.md)。
 
 ## 自分用の設定
 
@@ -152,6 +270,7 @@ export TEX_AUTHOR='名前'
 | `config/zed/settings.json` / `keymap.json` | `~/.config/zed/` の同名ファイル | vim モード、保存時の整形、Markdown の折り返し、拡張の自動導入、プレビューとペイン移動のキー。`zed` コマンドも `~/.local/bin` に置く |
 | `config/terminfo/herdr.terminfo` | `~/.terminfo`（`tic` で登録） | 取り消し線・波線を足した `xterm-256color` |
 | `Brewfile` | | `install.sh brew` で入るアプリ（macOS） |
+| `modules.tsv` | | モジュール（自作コマンドなどのリポジトリ）の一覧。上の「モジュール」 |
 | `local.sh.example` | `~/.config/shell/local.sh` | 自分用設定の雛形 |
 | `claude/CLAUDE.md` | `~/.claude/CLAUDE.md` から読み込む | Claude Code の共通ルール |
 | `claude/hooks/` | `~/.claude/hooks/`（コピー） | Claude Code のフック（上の「Claude Code」） |
@@ -169,6 +288,9 @@ git -C ~/dotfiles pull
 シェルは `exec $SHELL`、Ghostty は `Cmd+Shift+,`、herdr は `herdr server reload-config`、Neovim は再起動。
 Claude Code の共通ルールは次に起動したセッションから反映される。`claude/hooks/` が変わったときだけ
 `install.sh claude` を実行し直す（フックはコピーなので pull だけでは更新されない）。
+
+モジュールも更新するなら、最初に入れたときと同じオプションで `install.sh` を実行し直す
+（各モジュールを `git pull --ff-only` し、増えたコマンドのリンクを張る。ほかの設定は「設定済み」と出るだけ）。
 
 ## zsh と bash の違い
 
