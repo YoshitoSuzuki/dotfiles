@@ -1,0 +1,6 @@
+# モジュール: install.sh が clone して反映させるリポジトリ（README の「モジュール」）。
+# 列はタブ区切り: 名前 種類(tool/data) OS(all/macos/linux) 既定(yes/opt) リポジトリ 置き場所 コマンド
+#   置き場所が - なら ~/bin-src/<名前>。コマンドは tool のときだけ、リポジトリ内のパスを空白区切りで書く（~/bin にリンクする）
+#   private リポジトリの modules.tsv に同じ名前があれば、そちらが優先される
+bin	data	all	yes	https://github.com/YoshitoSuzuki/bin-commands.git	~/bin	-
+webpin	tool	all	opt	https://github.com/YoshitoSuzuki/webpin.git	-	bin/webpin
