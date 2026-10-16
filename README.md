@@ -57,10 +57,16 @@ git clone https://github.com/YoshitoSuzuki/dotfiles.git ~/dotfiles
 | `--gui` / `--no-gui` | GUI の有無の自動判定を上書きする。自動判定は「macOS は常にあり、Linux は `$DISPLAY` / `$WAYLAND_DISPLAY` / `$XDG_CURRENT_DESKTOP` のどれかがあればあり」 | 自動判定 |
 | `--no-brew` | Homebrew を使わない。`brew` の代わりに `tools` `apps` `fonts` を入れる（macOS の GUI のときだけ意味がある。Linux はもともと Homebrew を使わない） | macOS では Homebrew を使う |
 | `--no-modules` | モジュールを clone・更新しない（設定だけ入れる） | モジュールも入れる |
-| `--dry-run` | 判定結果（OS・GUI・公開範囲）と、入れる設定・モジュールを表示するだけで、何も変えない | 実際に入れる |
+| `--dry-run` | 判定結果（OS・GUI・会社のPC か）と、入れる設定・モジュールを表示するだけで、何も変えない | 実際に入れる |
 | `-h` / `--help` | 使い方を表示する | |
 | 名前を並べる（`install.sh nvim ghostty`） | 並べた名前のものだけを入れる。既定の一覧とモジュールの既定は使わない（モジュールも名前を書けば入る） | |
 
+
+環境変数:
+
+| 環境変数 | 何をするか |
+| --- | --- |
+| `DOTFILES_EXTRA_MODULES` | 追加のモジュール一覧（`modules.tsv` と同じ書き方のファイル）のパス。その一覧のモジュールも入れる。`modules.tsv` と同じ名前があれば、こちらの行が優先される（例: `bin` を自分の別のリポジトリに差し替える） |
 
 ### 環境ごとの既定の一覧
 
@@ -216,7 +222,7 @@ git clone https://github.com/YoshitoSuzuki/dotfiles.git ~/dotfiles
 ## キー操作
 
 Ghostty + herdr・Neovim・Zed・シェルの操作キーは [docs/keys.md](docs/keys.md) にまとめている。
-公開範囲・GUI の判定とモジュールの仕組みは [docs/profiles.md](docs/profiles.md)。
+環境の判定とモジュールの仕組みは [docs/profiles.md](docs/profiles.md)。
 
 ## 自分用の設定
 

@@ -31,7 +31,8 @@
 
 ## モジュール
 
-- 一覧は `modules.tsv`。awk で OS に合うものだけを選び、同じ名前が複数あれば後ろの行を使う（`modules_table`）
+- 一覧は `modules.tsv` と、`DOTFILES_EXTRA_MODULES` で渡した追加の一覧。awk で OS に合うものだけを選び、
+  同じ名前があれば追加の一覧の行を使う（`modules_table`）。別のリポジトリから一覧を足し、`bin` などを差し替えるための入口
 - `tool` のコマンドは `~/bin` にリンクする。`~/bin` 自体が `bin` モジュールのリポジトリなので、
   リンクは `~/bin/.git/info/exclude` の管理範囲（`# >>> dotfiles modules` 〜 `# <<< dotfiles modules`）に
   書いて Git 管理から外す。**`.gitignore` に書かないのは、公開されてリンクの名前（使っているツール）が見えてしまうため**

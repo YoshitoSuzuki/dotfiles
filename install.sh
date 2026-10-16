@@ -2,13 +2,12 @@
 # このリポジトリの設定と自作コマンドを、このマシン（macOS / Linux）にまとめて入れる。
 # 詳しい説明は README の「入れ方」「オプション」「モジュール」。
 #
-#   ./install.sh                  public（誰が使ってもよい設定だけ）。OS と GUI の有無に合わせて選ぶ
-#   ./install.sh --private        個人用。public に private リポジトリ（DOTFILES_PRIVATE_REPO）を重ねる
-#   ./install.sh --work           会社用。public に、会社のPCで事故を防ぐ設定を足す
+#   ./install.sh                  OS と GUI の有無に合わせて選んだ一式
+#   ./install.sh --work           会社用。一式に、会社のPCで事故を防ぐ設定を足す
 #   ./install.sh nvim ghostty     名前を並べたものだけ（既定の一覧は使わない）
 #
 # オプション
-#   --private / --work            公開範囲（どちらも付けなければ public。同時には付けられない）
+#   --work                        会社の PC 用の設定を足す
 #   --with <名前,...>             既定の一覧に足す（設定・モジュールのどちらの名前でもよい）
 #   --without <名前,...>          既定の一覧から除く
 #   --all                         入れられるものを全部入れる（CLI の環境では herdr とアプリを除く）
@@ -16,6 +15,9 @@
 #   --no-brew                     Homebrew を使わずに入れる（brew の代わりに tools apps fonts）
 #   --no-modules                  モジュール（自作コマンドなどのリポジトリ）を clone しない
 #   --dry-run                     何を入れるかを表示するだけで、何も変えない
+#
+# 環境変数
+#   DOTFILES_EXTRA_MODULES        追加のモジュール一覧（modules.tsv と同じ書き方）のパス。同じ名前はこちらが優先
 #
 # 設定の名前
 #   brew      Homebrew と Brewfile のアプリ（macOS）
@@ -33,7 +35,7 @@
 #   terminfo  herdr の中の Neovim で取り消し線・波線を出すための terminfo を登録
 #   claude    Claude Code の共通ルール・フック・スキル（~/.claude。既存の設定は置き換えずに足す）
 #
-# モジュールの名前は modules.tsv（と private リポジトリの modules.tsv）を参照。
+# モジュールの名前は modules.tsv（と DOTFILES_EXTRA_MODULES の一覧）を参照。
 #
 # 設定はシンボリックリンクで置く。既にファイルがあれば <名前>.backup.<日時> に退避する。
 # 何度実行しても同じ結果になる。
@@ -42,8 +44,7 @@ set -eu
 DOTFILES_DIR=$(cd "$(dirname "$0")" && pwd)
 CONFIG_HOME=${XDG_CONFIG_HOME:-$HOME/.config}
 STAMP=$(date +%Y%m%d%H%M%S)
-PRIVATE_DIR=$HOME/dotfiles-private
-PRIVATE_REPO=${DOTFILES_PRIVATE_REPO:-git@github.com:YoshitoSuzuki/dotfiles-private.git}
+EXTRA_MODULES=${DOTFILES_EXTRA_MODULES:-}
 BIN_DIR=$HOME/bin
 BIN_SRC=$HOME/bin-src
 
@@ -62,7 +63,7 @@ usage() {
   exit "${1:-0}"
 }
 
-SCOPE=public
+WORK=0
 GUI=auto
 WITH=
 WITHOUT=
@@ -74,14 +75,7 @@ NAMES=
 
 while [ $# -gt 0 ]; do
   case $1 in
-    --private | --work)
-      s=${1#--}
-      if [ $SCOPE != public ] && [ $SCOPE != "$s" ]; then
-        echo "--private と --work は同時に指定できません" >&2
-        exit 1
-      fi
-      SCOPE=$s
-      ;;
+    --work) WORK=1 ;;
     --with)
       [ $# -ge 2 ] || usage 1
       WITH="$WITH $(echo "$2" | tr ',' ' ')"
@@ -126,12 +120,12 @@ has_word() { case " $1 " in *" $2 "*) return 0 ;; esac; return 1; }
 
 CONFIG_NAMES="brew tools apps fonts zsh bash ghostty herdr nvim wezterm zed terminfo claude"
 
-# モジュールの一覧（名前 種類 OS 既定 リポジトリ 置き場所 コマンド）。同じ名前は private が優先
+# モジュールの一覧（名前 種類 OS 既定 リポジトリ 置き場所 コマンド）。同じ名前は追加の一覧が優先
 modules_table() {
   {
     grep -v '^#' "$DOTFILES_DIR/modules.tsv" | grep . | sed 's/^/1	/'
-    if [ $SCOPE = private ] && [ -f "$PRIVATE_DIR/modules.tsv" ]; then
-      grep -v '^#' "$PRIVATE_DIR/modules.tsv" | grep . | sed 's/^/2	/'
+    if [ -n "$EXTRA_MODULES" ]; then
+      grep -v '^#' "$EXTRA_MODULES" | grep . | sed 's/^/2	/'
     fi
   } | awk -F'\t' -v os=$OS '
     $4 != "all" && $4 != os { next }
@@ -159,7 +153,7 @@ resolve() {
     targets="zsh bash"
     [ $ALL = 1 ] && targets="tools zsh bash nvim terminfo"
   fi
-  [ $SCOPE != public ] || [ $ALL = 1 ] && targets="$targets claude"
+  [ $WORK = 1 ] || [ $ALL = 1 ] && targets="$targets claude"
   for n in $WITH; do
     has_word "$CONFIG_NAMES" "$n" || continue
     # nvim だけ足すときは、Neovim 本体と検索ツールも要る
@@ -199,8 +193,7 @@ module_dest() {  # module_dest <名前> <種類> <置き場所>
 for n in $WITH $WITHOUT $NAMES; do
   has_word "$CONFIG_NAMES" "$n" && continue
   grep -q "^$n	" "$DOTFILES_DIR/modules.tsv" && continue
-  [ -f "$PRIVATE_DIR/modules.tsv" ] && grep -q "^$n	" "$PRIVATE_DIR/modules.tsv" && continue
-  [ $SCOPE = private ] && [ ! -f "$PRIVATE_DIR/modules.tsv" ] && continue  # private の一覧はまだ clone していない
+  [ -n "$EXTRA_MODULES" ] && grep -q "^$n	" "$EXTRA_MODULES" && continue
   echo "不明な名前: $n" >&2
   exit 1
 done
@@ -210,11 +203,8 @@ resolve
 if [ $DRY_RUN = 1 ]; then
   echo "OS:       $OS"
   echo "GUI:      $([ $GUI = 1 ] && echo あり || echo なし)"
-  echo "公開範囲: $SCOPE"
+  echo "会社のPC: $([ $WORK = 1 ] && echo はい || echo いいえ)"
   echo "設定:    $targets"
-  if [ $SCOPE = private ]; then
-    echo "private:  $PRIVATE_REPO -> $PRIVATE_DIR$([ -d "$PRIVATE_DIR/.git" ] || echo '（まだ無いので、モジュールは public の一覧だけを表示）')"
-  fi
   echo "モジュール:"
   modules_table | while IFS='	' read -r name kind mos def repo dest cmds; do
     module_selected "$name" "$def" || continue
@@ -533,19 +523,7 @@ install_modules() {
   write_bin_exclude $linked
 }
 
-# ---- 公開範囲ごとの準備 ----
-
-check_github_ssh() {
-  reply=$(ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -T git@github.com 2>&1 || true)
-  case $reply in
-    *"successfully authenticated"*) return 0 ;;
-  esac
-  echo "--private には ssh で GitHub に接続できることが必要（private リポジトリを clone するため）。" >&2
-  echo "鍵を作って GitHub に登録してから実行し直す:" >&2
-  echo "  ssh-keygen -t ed25519 && cat ~/.ssh/id_ed25519.pub   # 表示された公開鍵を https://github.com/settings/keys に登録" >&2
-  echo "（gh が使えるなら: gh auth login && gh ssh-key add ~/.ssh/id_ed25519.pub）" >&2
-  exit 1
-}
+# ---- 会社のPC ----
 
 install_work() {
   head_ "会社のPC"
@@ -580,12 +558,6 @@ install_work() {
 
 # ---- 実行 ----
 
-if [ $SCOPE = private ]; then
-  check_github_ssh
-  head_ "private リポジトリ"
-  sync_repo "$PRIVATE_REPO" "$PRIVATE_DIR"
-fi
-
 if [ $NO_MODULES = 0 ] || [ -n "$NAMES" ]; then
   install_modules
 fi
@@ -609,7 +581,7 @@ for t in $targets; do
     zsh)
       head_ "zsh"
       zshrc=${ZDOTDIR:-$HOME}/.zshrc
-      # 自分の .zshrc（private リポジトリへのリンクを含む）からこのリポジトリの .zshrc を読み込んでいる場合は置き換えない
+      # 自分の .zshrc（別の場所へのリンクを含む）からこのリポジトリの .zshrc を読み込んでいる場合は置き換えない
       if [ -f "$zshrc" ] && [ "$(readlink "$zshrc" 2>/dev/null)" != "$DOTFILES_DIR/.zshrc" ] &&
         grep -q 'dotfiles/\.zshrc' "$zshrc"; then
         echo "  - ${zshrc}（dotfiles を読み込み済み）"
@@ -661,13 +633,7 @@ for t in $targets; do
   esac
 done
 
-[ $SCOPE = work ] && install_work
-
-# private の設定（~/.config の個人の設定、Mac の設定など）は private リポジトリの install.sh が入れる
-if [ $SCOPE = private ] && [ -f "$PRIVATE_DIR/install.sh" ]; then
-  head_ "private の設定"
-  sh "$PRIVATE_DIR/install.sh"
-fi
+[ $WORK = 1 ] && install_work
 
 if [ ! -f "$CONFIG_HOME/shell/local.sh" ]; then
   mkdir -p "$CONFIG_HOME/shell"
