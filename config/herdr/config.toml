@@ -28,7 +28,7 @@ agent_panel_sort = "priority"
 
 [ui.sidebar.spaces]
 # スペース名を「1つ上のディレクトリ/今のディレクトリ」で出す（zsh のプロンプトの %2~ と同じ）。
-# $dir は .zshrc の _herdr_space_dir がプロンプトのたびに送っている。
+# $dir は plugins/space-dir が送っている（名前の変更などはプラグインのイベント、cd は .zshrc のプロンプトのフックから）。
 rows = [["state_icon", "$dir"], ["branch", "git_status"]]
 
 [ui.sidebar.agents]

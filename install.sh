@@ -268,6 +268,10 @@ for t in $targets; do
       # ディレクトリごとではなく config.toml だけ置く（同じ場所に herdr の実行時ファイルができるため）
       head_ "herdr"
       link config/herdr/config.toml "$CONFIG_HOME/herdr/config.toml"
+      # スペース名を %2~ で出すプラグイン
+      if have herdr; then
+        herdr plugin link "$DOTFILES_DIR/config/herdr/plugins/space-dir" >/dev/null && echo "  ✓ herdr plugin space-dir"
+      fi
       ;;
     zed)
       # settings.json と keymap.json だけ置く（同じ場所に Zed の実行時ファイルができるため）
