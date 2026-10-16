@@ -33,7 +33,6 @@ git clone https://github.com/YoshitoSuzuki/dotfiles.git ~/dotfiles
 | Linux（ssh で入るだけ） | `install.sh` | シェルの設定（bash、zsh があれば zsh）と自作コマンドだけ |
 | Linux（ssh、Neovim も使う） | `install.sh --with nvim` | 上に加えて Neovim・ripgrep・fd・lazygit・Node.js を `~/.local` に |
 | 会社の PC | `install.sh --work` | 上のどれかに加えて、会社の PC 向けの安全策（下の「オプション」） |
-| 自分の PC（個人の設定も入れる） | `install.sh --private` | 上のどれかに加えて、private リポジトリの設定と自作コマンド |
 
 `install.sh` がやること（何度実行しても同じ結果になる）:
 
@@ -42,7 +41,7 @@ git clone https://github.com/YoshitoSuzuki/dotfiles.git ~/dotfiles
    `--no-brew` や Linux のデスクトップでは公式の配布物から `~` の下に入れる
 3. 設定ファイルをシンボリックリンクで置く。既にあるファイルは `<名前>.backup.<日時>` に退避する
 4. herdr の中の Neovim で取り消し線と波線を出すための terminfo を登録する
-5. `--work` / `--private` のときは Claude Code の共通設定を `~/.claude` に足す（下の「Claude Code」）
+5. `--work` のときは Claude Code の共通設定を `~/.claude` に足す（下の「Claude Code」）
 6. 自分用の設定ファイル `~/.config/shell/local.sh` が無ければ雛形から作る
 
 何が入るかは、先に `install.sh --dry-run`（ほかのオプションと組み合わせてよい）で確かめられる。
@@ -51,8 +50,7 @@ git clone https://github.com/YoshitoSuzuki/dotfiles.git ~/dotfiles
 
 | オプション | 何をするか | 付けないとき |
 | --- | --- | --- |
-| `--private` | public の一式に、private リポジトリ（`DOTFILES_PRIVATE_REPO`）を重ねる。そのリポジトリを `~/dotfiles-private` に clone し、そこの `modules.tsv` のモジュールと `install.sh`（個人の設定）を入れる。Claude Code の共通設定も入れる。**ssh で GitHub に接続できないと何もせずに止まる** | public（誰が使ってもよい設定だけ） |
-| `--work` | 会社の PC 用。public の一式に次の4つを足す: Claude Code の共通設定 / `~/.claude/CLAUDE.md` に「会社のPC」と書く（共通ルールの「会社のマシンでは」を Claude が判断できるように） / `~/.config/git/work.gitconfig` の雛形を作り git から読み込む（会社のメール・プロキシなどはここに書く） / この dotfiles の push を無効にする（会社のメールで public のリポジトリにコミットしないように。pull はできる） | 同上 |
+| `--work` | 会社の PC 用。public の一式に次の4つを足す: Claude Code の共通設定 / `~/.claude/CLAUDE.md` に「会社のPC」と書く（共通ルールの「会社のマシンでは」を Claude が判断できるように） / `~/.config/git/work.gitconfig` の雛形を作り git から読み込む（会社のメール・プロキシなどはここに書く） / この dotfiles の push を無効にする（会社のメールで public のリポジトリにコミットしないように。pull はできる） | public（誰が使ってもよい設定だけ） |
 | `--with <名前,...>` | 既定の一覧に足す。設定の名前でもモジュールの名前でもよい。カンマ区切りか、`--with` を繰り返す。`--with nvim` は Neovim 本体（`tools`）も一緒に入れる | 既定の一覧のまま |
 | `--without <名前,...>` | 既定の一覧から除く（`--all` と組み合わせると、全部から除く） | 同上 |
 | `--all` | 入れられるものを全部入れる（既定で入らない `opt` のモジュールと `claude` を含む）。GUI の無い環境では herdr・アプリ・ターミナルの設定は入れない | 環境ごとの既定 |
@@ -63,9 +61,6 @@ git clone https://github.com/YoshitoSuzuki/dotfiles.git ~/dotfiles
 | `-h` / `--help` | 使い方を表示する | |
 | 名前を並べる（`install.sh nvim ghostty`） | 並べた名前のものだけを入れる。既定の一覧とモジュールの既定は使わない（モジュールも名前を書けば入る） | |
 
-- `--private` と `--work` は同時に指定できない（エラーになる）
-- 環境変数 `DOTFILES_PRIVATE_REPO` で `--private` が clone するリポジトリを変えられる（既定は作者の private リポジトリ。
-  ほかの人が使うなら、自分の private リポジトリを指定する。中身の決まりは下の「private リポジトリ」）
 
 ### 環境ごとの既定の一覧
 
@@ -74,7 +69,7 @@ git clone https://github.com/YoshitoSuzuki/dotfiles.git ~/dotfiles
 | macOS | `brew zsh bash ghostty herdr nvim wezterm zed terminfo`（`--no-brew` なら `brew` の代わりに `tools apps fonts`） |
 | Linux（GUI あり） | `tools apps fonts zsh bash ghostty herdr nvim wezterm zed terminfo` |
 | Linux（GUI なし） | `zsh bash`（zsh が入っていないときは `bash` だけ）。`--all` なら `tools zsh bash nvim terminfo claude` |
-| `--work` / `--private` | 上に `claude` を足す |
+| `--work` | 上に `claude` を足す |
 
 ### 設定の名前（`--with` / `--without` / 名前を並べるときに使う）
 
@@ -138,16 +133,6 @@ git clone https://github.com/YoshitoSuzuki/dotfiles.git ~/dotfiles
 - どのモジュールにも属さなくなったリンクは警告だけを出す（自動では消さない）
 - リポジトリの直下に `install.sh` があれば、clone・更新のあとに実行する（常駐ジョブの登録など、
   反映の手順は各リポジトリが自分で持つ）
-
-## private リポジトリ
-
-`--private` で重ねるリポジトリ（既定は `~/dotfiles-private` に clone）。公開できない設定と、
-private のモジュールを置く。このリポジトリが中身に求めるのは次の2つだけ。
-
-| ファイル | 役割 |
-| --- | --- |
-| `modules.tsv` | 書き方は上の「モジュール」と同じ。**同じ名前があれば public の一覧より優先される**（例: `bin` を private の自作コマンドのリポジトリに差し替える） |
-| `install.sh` | 個人の設定を入れるスクリプト。public の一式とモジュールを入れたあとに実行される |
 
 ## 環境ごとの補足
 
