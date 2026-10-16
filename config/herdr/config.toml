@@ -26,11 +26,6 @@ show_agent_labels_on_pane_borders = true
 # サイドバーのエージェント一覧を、手が空いた順（attention queue）に並べる。
 agent_panel_sort = "priority"
 
-[ui.sidebar.spaces]
-# スペース名を「1つ上のディレクトリ/今のディレクトリ」で出す（zsh のプロンプトの %2~ と同じ）。
-# $dir は plugins/space-dir が送っている（名前の変更などはプラグインのイベント、cd は .zshrc のプロンプトのフックから）。
-rows = [["state_icon", "$dir"], ["branch", "git_status"]]
-
 [ui.sidebar.agents]
 # 1行目: 状態アイコン + 会話のタイトル、2行目: idle/working + エージェント名。
 rows = [["state_icon", "terminal_title_stripped"], ["state_text", "agent"]]

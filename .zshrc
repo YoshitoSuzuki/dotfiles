@@ -77,16 +77,4 @@ PROMPT='%F{cyan}%2~%f $ '
 RPROMPT=' ###'
 
 
-## herdr のスペース名
-
-# サイドバーのスペース名をプロンプトと同じ %2~ で出す（config/herdr/plugins/space-dir）。
-# 名前の変更などはプラグインのイベントで拾えるが、cd ではイベントが来ないのでプロンプトのたびにも送る。
-if [[ -n $HERDR_WORKSPACE_ID ]] && (( $+commands[herdr] && $+commands[jq] )); then
-  _herdr_space_dir_script=${${(%):-%x}:A:h}/config/herdr/plugins/space-dir/space-dir.zsh
-  autoload -Uz add-zsh-hook
-  _herdr_space_dir_precmd() { zsh $_herdr_space_dir_script &>/dev/null &! }
-  add-zsh-hook precmd _herdr_space_dir_precmd
-fi
-
-
 [ -f "$LOCAL_SHELL_DIR/local.zsh" ] && source "$LOCAL_SHELL_DIR/local.zsh"
